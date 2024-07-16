@@ -31,39 +31,68 @@ class _HomeViewState extends ConsumerState<_HomeView> {
     super.initState();
 
     ref.read(nowPlayingMoviesProvider.notifier).loadNextPage();
+    ref.read(popularMoviesProvider.notifier).loadNextPage();
+    ref.read(topRatedProvider.notifier).loadNextPage();
+    ref.read(upComingProvider.notifier).loadNextPage();
   }
 
   @override
   Widget build(BuildContext context) {
     final nowPlayingMovies = ref.watch(nowPlayingMoviesProvider);
-
     final slideShowMovies = ref.watch(moviesSlideshowProvider);
+    final popularMovies = ref.watch(popularMoviesProvider);
+    final topRatedMovies = ref.watch(topRatedProvider);
+    final upConmingMovies = ref.watch(upComingProvider);
 
-    return Column(
-      children: [
-        const CustomAppbar(),
-        // Expanded(
-        //     child: Scaffold(
-        //   body: ListView.builder(
-        //     itemCount: nowPlayingMovies.length,
-        //     itemBuilder: (context, index) {
-        //       final movie = nowPlayingMovies[index];
-        //       return ListTile(
-        //         title: Text(movie.title),
-        //       );
-        //     },
-        //   ),
-        // ))
-        MoviesSlideshow(movies: slideShowMovies),
-        MovieHorizontalListview(
-          movies: nowPlayingMovies,
-          title: 'Cinema',
-          subTitle: 'Monday',
-          loadNextPage: () {
-            ref.read(nowPlayingMoviesProvider.notifier).loadNextPage();
-          },
-        )
-      ],
-    );
+    return CustomScrollView(slivers: [
+      const SliverAppBar(
+        floating: true,
+        flexibleSpace: FlexibleSpaceBar(
+          title: CustomAppbar(),
+        ),
+      ),
+      // delagate funcion que me ayuda a generar mis elementos
+      SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+        return Column(
+          children: [
+            MoviesSlideshow(movies: slideShowMovies),
+            MovieHorizontalListview(
+              movies: nowPlayingMovies,
+              title: 'Cinema',
+              subTitle: 'Monday',
+              loadNextPage: () {
+                ref.read(nowPlayingMoviesProvider.notifier).loadNextPage();
+              },
+            ),
+            MovieHorizontalListview(
+              movies: upConmingMovies,
+              title: 'Coming soon',
+              subTitle: 'This month',
+              loadNextPage: () {
+                ref.read(upComingProvider.notifier).loadNextPage();
+              },
+            ),
+            MovieHorizontalListview(
+              movies: popularMovies,
+              title: 'Popular',
+              // subTitle: '',
+              loadNextPage: () {
+                ref.read(popularMoviesProvider.notifier).loadNextPage();
+              },
+            ),
+            MovieHorizontalListview(
+              movies: topRatedMovies,
+              title: 'Best Movies',
+              subTitle: 'Always',
+              loadNextPage: () {
+                ref.read(topRatedProvider.notifier).loadNextPage();
+              },
+            ),
+            const SizedBox(height: 50)
+          ],
+        );
+      }, childCount: 1)),
+    ]);
   }
 }
