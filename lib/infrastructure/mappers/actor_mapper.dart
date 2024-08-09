@@ -9,5 +9,5 @@ class ActorMapper {
       name: cast.name,
       profilePath: cast.profilePath != null
           ? 'https://image.tmdb.org/t/p/w500${cast.profilePath}'
-          : 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.baumandblume.com%2Ftestimonial-item%2Ftestimonial-01%2Fno-image-icon-md%2F&psig=AOvVaw2ppXl45hfvGNlP4qL-Lio_&ust=1722995118185000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCKjX2ZOf34cDFQAAAAAdAAAAABAT');
+          : 'https://img.wattpad.com/8f19b412f2223afe4288ed0904120a48b7a38ce1/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f776174747061642d6d656469612d736572766963652f53746f7279496d6167652f5650722d38464e2d744a515349673d3d2d3234323931353831302e313434336539633161633764383437652e6a7067?s=fit&w=720&h=720');
 }
