@@ -1,9 +1,14 @@
+import 'package:cinemapedia/domain/entities/movie.dart';
+import 'package:cinemapedia/presentation/delegates/search_movie_delegate.dart';
+import 'package:cinemapedia/presentation/providers/providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class CustomAppbar extends StatelessWidget {
+class CustomAppbar extends ConsumerWidget {
   const CustomAppbar({super.key});
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
     final titleStyle = Theme.of(context).textTheme.titleMedium;
     return SafeArea(
@@ -22,7 +27,21 @@ class CustomAppbar extends StatelessWidget {
                 ),
                 // Que tome todo el espacio disponible
                 const Spacer(),
-                IconButton(onPressed: () {}, icon: const Icon(Icons.search))
+                IconButton(
+                    onPressed: () {
+                      final movieRepository = ref.read(movieRepositoryProvider);
+
+                      final movie = showSearch<Movie?>(
+                              context: context,
+                              delegate: SearchMovieDelegate(
+                                  searchMovies: movieRepository.searchMoviews))
+                          .then((movie) {
+                        if (movie == null) return;
+                        context.push('/movie/${movie.id}');
+                      });
+                      // Se encarga de la bsqueda
+                    },
+                    icon: const Icon(Icons.search))
               ],
             ),
           ),
