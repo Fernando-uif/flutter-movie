@@ -9,11 +9,15 @@ typedef SearchMoviesCallback = Future<List<Movie>> Function(String query);
 
 class SearchMovieDelegate extends SearchDelegate<Movie?> {
   final SearchMoviesCallback searchMovies;
+  List<Movie> initialMovies;
+
   StreamController<List<Movie>> debouncedMovies = StreamController.broadcast();
+  StreamController<bool> isLoadingStream = StreamController.broadcast();
 
   Timer? _debounceTimer;
 
-  SearchMovieDelegate({required this.searchMovies});
+  SearchMovieDelegate(
+      {required this.searchMovies, required this.initialMovies});
 
   void clearStreams() {
     // Tenemos que limpiar lo que vamos haciendo en nuestro stream, porque se quda basura, entonces lo podemos hacer con el `debouncedMovies.close()`
@@ -21,30 +25,65 @@ class SearchMovieDelegate extends SearchDelegate<Movie?> {
   }
 
   void _onQueryChanged(String query) {
+    isLoadingStream.add(true);
     if (_debounceTimer?.isActive ?? false) _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
-      if (query.isEmpty) {
-        debouncedMovies.add([]);
-        return;
-      }
       final movies = await searchMovies(query);
+      initialMovies = movies;
       debouncedMovies.add(movies);
+      isLoadingStream.add(false);
     });
   }
 
   @override
   String get searchFieldLabel => 'Search Movie';
 
+  Widget buildResultsAndSuggestions() {
+    return StreamBuilder(
+        initialData: initialMovies,
+        stream: debouncedMovies.stream,
+        builder: (context, snapshot) {
+          // _onQueryChanged(query);
+
+          final movies = snapshot.data ?? [];
+          return ListView.builder(
+              itemCount: movies.length,
+              itemBuilder: (context, index) {
+                return _MovieItem(
+                  movie: movies[index],
+                  // close es la referencia global, por eso podemos mandarla a llamar
+                  onMovieSelected: (context, movie) {
+                    clearStreams();
+                    close(context, movie);
+                  },
+                );
+              });
+        });
+  }
+
   @override
   List<Widget>? buildActions(BuildContext context) {
     // Como las acciones que tenemos en el header , refiriendonos a los search
     return [
-      // Palabra reservda el query, la caja de texto, con esto vaciamos la caja de texto al momento de darle tap a la X
-
-      FadeIn(
-        animate: query.isNotEmpty,
-        child: IconButton(
-            onPressed: () => query = '', icon: const Icon(Icons.clear)),
+      StreamBuilder(
+        initialData: false,
+        stream: isLoadingStream.stream,
+        builder: (context, snapshot) {
+          if (snapshot.data ?? false) {
+            return SpinPerfect(
+              // duration: const Duration(seconds: 20),
+              spins: 10,
+              infinite: true,
+              child: IconButton(
+                  onPressed: () => query = '', icon: const Icon(Icons.refresh)),
+            );
+          }
+          return FadeIn(
+            animate: query.isNotEmpty,
+            child: IconButton(
+                onPressed: () => query = '', icon: const Icon(Icons.clear)),
+          );
+        },
       )
     ];
   }
@@ -63,7 +102,7 @@ class SearchMovieDelegate extends SearchDelegate<Movie?> {
   @override
   Widget buildResults(BuildContext context) {
     // Los resultados que aparecen al dar enter
-    return const Text('Build-Results');
+    return buildResultsAndSuggestions();
   }
 
   @override
@@ -72,25 +111,7 @@ class SearchMovieDelegate extends SearchDelegate<Movie?> {
 
     _onQueryChanged(query);
 
-    return StreamBuilder(
-        // future: searchMovies(query),
-        stream: debouncedMovies.stream,
-        initialData: const [],
-        builder: (context, snapshot) {
-          final movies = snapshot.data ?? [];
-          return ListView.builder(
-              itemCount: movies.length,
-              itemBuilder: (context, index) {
-                return _MovieItem(
-                  movie: movies[index],
-                  // close es la referencia global, por eso podemos mandarla a llamar
-                  onMovieSelected: (context, movie) {
-                    clearStreams();
-                    close(context, movie);
-                  },
-                );
-              });
-        });
+    return buildResultsAndSuggestions();
   }
 }
 
